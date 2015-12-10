@@ -1,27 +1,24 @@
 function attentionalBlinkLocalization(sj, run, thresh)
 % Create Design matrix to store run order.
-% Labels: [{1 'SOA'} {2 'post-flash rest'} {3 'target location'}
-% {4 'flash eye'} {5 'prime orientation'} {6 'rivalry response time'}
-% {7 'target response'}
+% Labels: [{1 'onset'} {2 'post-flash rest'} {3 'target location'}
+% {4 'flash eye'} {5 'prime orientation'} {6 'SOA'} {7 'rivalry response time'}
+% {8 'target response'}]
 % SOA between target and mask = 100ms
 % flexible ISI between target and mask -- necessarily shorten duration of
 % target
 % mask duration 100ms
 % SOA between target onset and rivalry onset = variable
 Design = [];
-TrainingRunOrder = make_trialTypeMatrix(1,5,[1 5 4 2 2]);
+TrainingRunOrder = make_trialTypeMatrix(1,6,[1 5 10 4 2 2]);
 RunOrder = Shuffle(1: size(TrainingRunOrder));
 RunOrder = TrainingRunOrder(RunOrder,:);
-empty = zeros(320, 1);
-RunOrder = horzcat(RunOrder, empty);
-RunOrder = horzcat(RunOrder, empty);
 disp(Design);
 
 behavior =1;
 
 
 Pad = 1.5;% number of seconds to pad front and backend
-monWidth = 40.6;%59.7; % in centimeters %%%%%%%%%%COMMENT ME OUT IN THE SCANNER!!!!!!!!!
+monWidth = 28.7;%59.7; % in centimeters %%%%%%%%%%COMMENT ME OUT IN THE SCANNER!!!!!!!!!
 viewDist = 94;
 stim.TextSize =16;
 
@@ -53,6 +50,52 @@ screenInfo.centerRight = [(screenInfo.screenRect(3)/2)+eye2(1) (screenInfo.scree
 screenInfo.RotLeft = cal.params{size(cal.params,2)}.rot_1;
 screenInfo.RotRight = cal.params{size(cal.params,2)}.rot_2;
 
+%
+% --------------------------------------------------------------------
+% Stimuli parameters
+% ------------------------
+stim = Data.stimparameters;
+stim.OrientFilt = thresh;% value will be devided by two later.
+stim.spatialFreIncrement =.08;
+% 
+% stim.Rivalrysize = 1.5; % in degrees
+% stim.Tgtsize = 2; % in degrees
+% stim.orientations = [135 45]; % rand*90+stim.T1orientation in degrees
+% stim.spatialfrequency = [3]; %degrees
+% stim.targetradius = [2]; %radius of grating in visual angle
+% stim.circleradius = [stim.Rivalrysize /2]; % radius of central circle target
+% 
+% stim.phasevar =[1]; % will be randomized later
+% stim.contrastPedestal =.25;  % 20% Rivalry contrast
+% stim.contrastPedestal2 =.9;  % 20% Target contrast
+% 
+% stim.contrastK = [1]; % increment change, 1 = no change
+% stim.maxAmp = 255; % maximum amplitude of stimuli intensity
+% stim.TextSize =20;
+% %stim.NoiseVar = 40; %127*stim.contrastPedestal;% in rgb values.
+% stim.NoiseMean = 0;
+% stim.NoiseSpatialFilt = [stim.spatialfrequency-(stim.spatialfrequency*.5) stim.spatialfrequency*2]; % cut off for high pass and low pass filter for noise. Centered around spatial frequency of stimuli
+% stim.OrientFilt = [thresh];% degrees of orientation filter when tgt & dominant eye are same
+% %stim.NoiseContrast = 5;% it will change (100-NoiseContrast)/100*128.
+
+%%% general parameters
+dpi = 96;           % display dpi
+%%% minor general calculations
+pixPerDegree = (viewDist*(tan(pi/180)))*dpi/2.54;
+checkDeg = viewDist*(1/dpi)*2.54/100;
+fNyquist = 0.5/checkDeg;
+
+
+Screen('TextSize',window,stim.TextSize);
+
+fix.size = .2; % diameter in degrees (Largest)
+fix.color = 128;
+fix.Cue = 1;
+fix.LocCueOffset = 0;
+
+%% get locations
+CircleDivision = 4;% ntimes 360 degrees are divided to get target locations
+TargetIdx = [1 2 3 4 ];
 for i = 1:length(stim.targetradius) %radius of grating in visual angle
     DisplayRadius = screenInfo.ppd*stim.targetradius(i); % distance from fixation in pixels
     
@@ -62,6 +105,35 @@ for i = 1:length(stim.targetradius) %radius of grating in visual angle
     fix.TgtPositions(i,:,:) = [Leftxloc(:, TargetIdx)' Leftyloc(:, TargetIdx)' Rightxloc(:, TargetIdx)' Rightyloc(:, TargetIdx)'];  % eccen, loc. Last index xyleft, xy right
     
 end
+
+% -------------------------------
+resp.button =[{'downarrow'} {'leftarrow'} {'uparrow'} {'rightarrow'} {'enter'}]; %  1 = counterclockwise, 2=clockwise
+
+keylist = zeros(1,256);
+for i = 1:length(resp.button)
+    keylist(Kbname(resp.button{i})) = 1;
+end
+% -------------------------------
+
+%% --------------------------------------------------------------------
+% Task parameters - for 2-interval force choice
+% -----------------------------
+directory = [pwd];
+Outfile = [directory '/Data/SJ' num2str(sj) 'OrientLocalizationRun' num2str(run) '.mat'];
+% design matrix labels for each column
+
+% % Timing
+% % --------------------
+Stim.TDur = 0.08;  %T1 Dur
+Stim.InterRespInterval =.2;  %delay between response probes
+Stim.ITI = .2; %delay
+Stim.TgtOnset = [2 3]; %[1 2]; % which dominance interval
+Stim.RspTimeOut = 4; % if larger than 1.25, then kbwait until first valid response. Otherwise, use time out.
+Stim.TrialTimeOut = 60; % max trial time if no dominance interval happens
+Stim.AdaptDur = 1.51;% mean (median domiance duration in pilot testing)
+scaling = [2 3 4 3 2]; % rise and fall of temporal cue (ramp)
+
+Data.labels = [{1 'onset'} {2 'post-flash rest'} {3 'target location'} {4 'flash eye'} {5 'prime orientation'} {6 'SOA'} {7 'rivalry response time'} {8 'target response'}];
 
 return
 
