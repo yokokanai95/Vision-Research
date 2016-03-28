@@ -1,4 +1,4 @@
-function InterOcularAttentionalBlinkRivalry(sj)
+function InterOcularAttentionalBlinkRivalry()
 global ptb_drawformattedtext_disableClipping;
 ptb_drawformattedtext_disableClipping = 1;
 % randomize grating presentation here
