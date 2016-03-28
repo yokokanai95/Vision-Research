@@ -5,10 +5,11 @@ ptb_drawformattedtext_disableClipping = 1;
 % {1 - nothing, 2 - timing {200, 300, 400, 500, 600}, 3 - , 4 - target location, 5 - eye, 6 - grating
 % orientation};
 Lags = [.5 .6 .7 .8 .9];
-TrainingRunOrder = make_trialTypeMatrix(5,6,[1 length(Lags) 1 4 2 2]);
+TrainingRunOrder = make_trialTypeMatrix(3,6,[1 length(Lags) 1 4 2 2]);
 RunOrder = Shuffle(1: size(TrainingRunOrder));
 RunOrder = TrainingRunOrder(RunOrder,:);
 RunOrder = horzcat(RunOrder, zeros(size(RunOrder,1),3));
+ROLength = size(RunOrder, 1);
 
 Pad = 1.5;% number of seconds to pad front and backend
 monWidth = 28.7;
@@ -20,7 +21,7 @@ Screen('ColorRange', screenInfo.curWindow, 255,1);
 wPtr= screenInfo.curWindow;
 PPD = screenInfo.ppd;
 frameDur = screenInfo.frameDur;
-numDur = .2;
+numDur = .1;
 maskDur = .2;
 
  
@@ -39,7 +40,7 @@ targDis = 1;
 Screen('TextStyle', wPtr,1);
 Screen('TextFont', wPtr, 'Helvetica');
   
-grating = makeSineGrating(1*screenInfo.ppd,1*screenInfo.ppd, 3.5,135/57.2957795,2 *pi,screenInfo.bckgnd,.1*(255),PPD,0,.5 * PPD,screenInfo.bckgnd)-screenInfo.bckgnd;
+grating = makeSineGrating(1*screenInfo.ppd,1*screenInfo.ppd, 3.5,135/57.2957795,2 *pi,screenInfo.bckgnd,8,PPD,0,.5 * PPD,screenInfo.bckgnd)-screenInfo.bckgnd;
 grating135 = Screen('MakeTexture', wPtr, (grating)+screenInfo.bckgnd);
 gratingRect = [0 0 size(grating)];
 
@@ -59,11 +60,11 @@ shift = [0, PPD*targDis; -PPD*targDis, 0; 0, -PPD*targDis; PPD*targDis, 0];
 [letterPosition, texture, sizes, mask] = loadTextures(screenInfo, wPtr, size(RunOrder,1), black, red);
 masksize = [sizes(1,1,1,1) sizes(1,1,1,2)];
 Screen('DrawText', wPtr, 'Indicate the direction of the red target once you see a mixture', 100, 400);
-S creen('DrawText', wPtr, 'Press any key to begin each trial', 100, 500);    
- Screen('Flip',wPtr);  
+Screen('DrawText', wPtr, 'Press any key to begin each trial', 100, 500);    
+Screen('Flip',wPtr);  
  
  
-for i = 1:4
+for i = 1:ROLength
     
     scrap = 0;
     while scrap == 0
@@ -174,7 +175,9 @@ for i = 1:4
     Screen('Flip',wPtr);
 end 
 sca;
-disp(RunOrder(1:4,:));
+disp(RunOrder(:,:));
+currdir = pwd;
+eval(['save ', currdir, 'data', sj, '.mat RunOrder']);
 return;
 
 %% ---------------------------------------------------------------------
