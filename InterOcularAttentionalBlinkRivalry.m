@@ -2,7 +2,7 @@ function InterOcularAttentionalBlinkRivalry()
 global ptb_drawformattedtext_disableClipping;
 ptb_drawformattedtext_disableClipping = 1;
 % randomize grating presentation here
-% {1 - timing [.3 .8 1.1], 2 - target , 3 - eye, 4 - grating}
+% {1 - timing {200, 300, 400, 500, 600}, 2 - target , 3 - eye, 4 - grating}
 Lags = [.3 .8 1.1];
 TrainingRunOrder = make_trialTypeMatrix(3,4,[length(Lags) 4 2 2]);
 same = 3;
@@ -33,7 +33,7 @@ for i = 1:length(resp.button)
 end
 
 black = [0 0 0];
-red  = [60 0 0];
+red  = [50 0 0];
 accred = [255 0 0]
 green = [0 255 0];
 targDis = 1;
@@ -45,11 +45,11 @@ grating = makeSineGrating(1*screenInfo.ppd,1*screenInfo.ppd, 3.5,135/57.2957795,
 grating135 = Screen('MakeTexture', wPtr, (grating)+screenInfo.bckgnd);
 gratingRect = [0 0 size(grating)];
 
-load (sprintf('/Users/blakelab/Documents/Research/Jocelyn/Sona_BRO/eyeCal/caldist_%d.mat', 95));
-eye1 = [cal.params{size(cal.params,2)}.x_offset_1 cal.params{size(cal.params,2)}.y_offset_1];
-eye2 = [cal.params{size(cal.params,2)}.x_offset_2 cal.params{size(cal.params,2)}.y_offset_2];
-%eye1 = [400, 0]
-%eye2 = [200, 0]
+%load (sprintf('/Users/blakelab/Documents/Research/Jocelyn/Sona_BRO/eyeCal/caldist_%d.mat', 95));
+%eye1 = [cal.params{size(cal.params,2)}.x_offset_1 cal.params{size(cal.params,2)}.y_offset_1];
+%eye2 = [cal.params{size(cal.params,2)}.x_offset_2 cal.params{size(cal.params,2)}.y_offset_2];
+eye1 = [400, 0]
+eye2 = [200, 0]
 screenInfo.centerLeft=[(screenInfo.screenRect(3)/2)-eye1(1) (screenInfo.screenRect(4)/2)-eye1(2)];
 screenInfo.centerRight = [(screenInfo.screenRect(3)/2)+eye2(1) (screenInfo.screenRect(4)/2)-eye2(2)];
 fixation = [0, 0, PPD*.2, PPD*.2];
@@ -62,12 +62,12 @@ Screen('Flip',wPtr);
 shift = [0, PPD*targDis; -PPD*targDis, 0; 0, -PPD*targDis; PPD*targDis, 0];
 [letterPosition, texture, sizes, mask] = loadTextures(screenInfo, wPtr, size(RunOrder,1), black, red);
 masksize = [sizes(1,1,1,1) sizes(1,1,1,2)];
-Screen('DrawText', wPtr, 'Indicate the direction of the red target once you see a mixture', 100, 400);
+Screen('DrawText', wPtr, 'the direction of the red target once you see a mixture', 100, 400);
 Screen('DrawText', wPtr, 'Press any key to begin each trial', 100, 500);    
 Screen('Flip',wPtr);
 
-%[numDur] = targetCalibration(Lrect, Rrect, cL, cR, wPtr, letterPosition, texture, sizes, mask, shift, frameDur, resp,masksize);
-numDur = .06
+[numDur] = targetCalibration(Lrect, Rrect, cL, cR, wPtr, letterPosition, texture, sizes, mask, shift, frameDur, resp,masksize);
+%numDur = .05
 maskDur = .29 - numDur;
 disp(numDur);
  
@@ -193,10 +193,10 @@ for i = 1:ROLength
     WaitSecs(.5);
     Screen('Flip',wPtr);
 end 
-sca;
 disp(RunOrder(:,:));
 currdir = pwd;
 eval(['save ', currdir, 'data', 95, '.mat RunOrder']);
+disp(numDur);
 return;
 
 %% ---------------------------------------------------------------------
