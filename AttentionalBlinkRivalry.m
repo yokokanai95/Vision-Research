@@ -1,4 +1,4 @@
-function AttentionalBlinkRivalry()
+function AttentionalBlinkRivalry(duration)
 global ptb_drawformattedtext_disableClipping;
 ptb_drawformattedtext_disableClipping = 1;
 % randomize grating presentation here
@@ -66,8 +66,7 @@ Screen('DrawText', wPtr, 'Indicate the direction of the red target once you see 
 Screen('DrawText', wPtr, 'Press any key to begin each trial', 100, 500);    
 Screen('Flip',wPtr);
 
-[numDur] = targetCalibration(Lrect, Rrect, cL, cR, wPtr, letterPosition, texture, sizes, mask, shift, frameDur, resp,masksize);
-%numDur = .05
+[numDur] = duration;
 maskDur = .29 - numDur;
 disp(numDur);
  
