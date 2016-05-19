@@ -33,23 +33,19 @@ for i = 1:length(resp.button)
 end
 
 black = [0 0 0];
-red  = [50 0 0];
-accred = [255 0 0]
+red  = [42 0 0];
+accred = [255 0 0];
 green = [0 255 0];
 targDis = 1;
 
 Screen('TextStyle', wPtr,1);
 Screen('TextFont', wPtr, 'Helvetica');
-  
-grating = makeSineGrating(1*screenInfo.ppd,1*screenInfo.ppd, 3.5,135/57.2957795,2 *pi,screenInfo.bckgnd,8,PPD,0,.5 * PPD,screenInfo.bckgnd)-screenInfo.bckgnd;
-grating135 = Screen('MakeTexture', wPtr, (grating)+screenInfo.bckgnd);
-gratingRect = [0 0 size(grating)];
 
-%load (sprintf('/Users/blakelab/Documents/Research/Jocelyn/Sona_BRO/eyeCal/caldist_%d.mat', 95));
-%eye1 = [cal.params{size(cal.params,2)}.x_offset_1 cal.params{size(cal.params,2)}.y_offset_1];
-%eye2 = [cal.params{size(cal.params,2)}.x_offset_2 cal.params{size(cal.params,2)}.y_offset_2];
-eye1 = [400, 0]
-eye2 = [200, 0]
+load (sprintf('/Users/blakelab/Documents/Research/Jocelyn/Sona_BRO/eyeCal/caldist_%d.mat', 95));
+eye1 = [cal.params{size(cal.params,2)}.x_offset_1 cal.params{size(cal.params,2)}.y_offset_1];
+eye2 = [cal.params{size(cal.params,2)}.x_offset_2 cal.params{size(cal.params,2)}.y_offset_2];
+%eye1 = [400, 0]
+%eye2 = [200, 0]
 screenInfo.centerLeft=[(screenInfo.screenRect(3)/2)-eye1(1) (screenInfo.screenRect(4)/2)-eye1(2)];
 screenInfo.centerRight = [(screenInfo.screenRect(3)/2)+eye2(1) (screenInfo.screenRect(4)/2)-eye2(2)];
 fixation = [0, 0, PPD*.2, PPD*.2];
@@ -88,21 +84,19 @@ for i = 1:tarCalLength
     target = targetCalMatrix(i,2);
     curDur = calDur(targetCalMatrix(i,1));
     maskDur = .3 - curDur;
-    leftor = randi ([1 2],1,1);
     for j = 1:4
         try
-            if (leftor == 1)
-                cen = cL;
-            else
-                cen = cR;
-            end
-            curX = cen(1,1) + shift(j,1) ;
-            curY = cen(1,2) + shift(j,2);
+            curlX = cL(1,1) + shift(j,1);
+            curlY = cL(1,2) + shift(j,2);
+            currX = cR(1,1) + shift(j,1);
+            currY = cR(1,2) + shift(j,2);
             map2Ref = 1 + mod(j+letterPosition(i,5),4); 
             if target == j
-                Screen('DrawTexture', wPtr, texture(2,map2Ref) , [], CenterRectOnPoint([0,0,sizes(2,map2Ref,1,2),sizes(2,map2Ref,1,1)], curX, curY));
+                Screen('DrawTexture', wPtr, texture(2,map2Ref) , [], CenterRectOnPoint([0,0,sizes(2,map2Ref,1,2),sizes(2,map2Ref,1,1)], curlX, curlY));
+                Screen('DrawTexture', wPtr, texture(2,map2Ref) , [], CenterRectOnPoint([0,0,sizes(2,map2Ref,1,2),sizes(2,map2Ref,1,1)], currX, currY));
             else
-                Screen('DrawTexture', wPtr, texture(1,map2Ref) , [], CenterRectOnPoint([0,0,sizes(1,map2Ref,1,2),sizes(1,map2Ref,1,1)], curX, curY));
+                Screen('DrawTexture', wPtr, texture(1,map2Ref) , [], CenterRectOnPoint([0,0,sizes(1,map2Ref,1,2),sizes(1,map2Ref,1,1)], curlX, curlY));
+                Screen('DrawTexture', wPtr, texture(1,map2Ref) , [], CenterRectOnPoint([0,0,sizes(1,map2Ref,1,2),sizes(1,map2Ref,1,1)], currX, currY));
             end
              
         catch ME
@@ -117,9 +111,12 @@ for i = 1:tarCalLength
     Screen('FillOval', wPtr, black, Rrect);
     for j = 1:4
         try
-            curX = cen(1,1) + shift(j,1);
-            curY = cen(1,2) + shift(j,2);
-            Screen('DrawTexture', wPtr, mask, [], CenterRectOnPoint([0,0,masksize(2),masksize(1)], curX, curY)); 
+            curlX = cL(1,1) + shift(j,1);
+            curlY = cL(1,2) + shift(j,2);
+            currX = cR(1,1) + shift(j,1);
+            currY = cR(1,2) + shift(j,2);
+            Screen('DrawTexture', wPtr, mask, [], CenterRectOnPoint([0,0,masksize(2),masksize(1)], curlX, curlY)); 
+            Screen('DrawTexture', wPtr, mask, [], CenterRectOnPoint([0,0,masksize(2),masksize(1)], currX, currY)); 
         catch ME
             sca;
             disp('caught at 439');
@@ -178,12 +175,11 @@ end
 
 x = targetCalMatrix(:,4);
 y = targetCalMatrix(:,3);
-plot(x,y,'x');
-axis([0 1 -.2 1.2]);
-tol = .1;
-hold on
-fnplt( spaps(x, y,  tol), 'r', 2 )
-hold off
+values = csaps(x,y,.9);
+fnplt(values); hold on, plot(x,y,'ok'), hold off
+currdir = pwd;
+eval(['save ', currdir, 'data', 95, '.mat targetCalMatrix']);
+sca;
 return;
 
 function screenInfo = openExperiment(monWidth, viewDist, curScreen)

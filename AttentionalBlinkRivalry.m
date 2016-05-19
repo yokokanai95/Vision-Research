@@ -33,8 +33,8 @@ for i = 1:length(resp.button)
 end
 
 black = [0 0 0];
-red  = [50 0 0];
-accred = [255 0 0]
+red  = [42 0 0];
+accred = [255 0 0];
 green = [0 255 0];
 targDis = 1;
 
@@ -45,11 +45,11 @@ grating = makeSineGrating(1*screenInfo.ppd,1*screenInfo.ppd, 3.5,135/57.2957795,
 grating135 = Screen('MakeTexture', wPtr, (grating)+screenInfo.bckgnd);
 gratingRect = [0 0 size(grating)];
 
-%load (sprintf('/Users/blakelab/Documents/Research/Jocelyn/Sona_BRO/eyeCal/caldist_%d.mat', 95));
-%eye1 = [cal.params{size(cal.params,2)}.x_offset_1 cal.params{size(cal.params,2)}.y_offset_1];
-%eye2 = [cal.params{size(cal.params,2)}.x_offset_2 cal.params{size(cal.params,2)}.y_offset_2];
-eye1 = [400, 0]
-eye2 = [200, 0]
+load (sprintf('/Users/blakelab/Documents/Research/Jocelyn/Sona_BRO/eyeCal/caldist_%d.mat', 95));
+eye1 = [cal.params{size(cal.params,2)}.x_offset_1 cal.params{size(cal.params,2)}.y_offset_1];
+eye2 = [cal.params{size(cal.params,2)}.x_offset_2 cal.params{size(cal.params,2)}.y_offset_2];
+%eye1 = [400, 0]
+%eye2 = [200, 0]
 screenInfo.centerLeft=[(screenInfo.screenRect(3)/2)-eye1(1) (screenInfo.screenRect(4)/2)-eye1(2)];
 screenInfo.centerRight = [(screenInfo.screenRect(3)/2)+eye2(1) (screenInfo.screenRect(4)/2)-eye2(2)];
 fixation = [0, 0, PPD*.2, PPD*.2];
@@ -194,8 +194,9 @@ for i = 1:ROLength
 end 
 disp(RunOrder(:,:));
 currdir = pwd;
-eval(['save ', currdir, 'data', 95, '.mat RunOrder']);
+eval(['save ', currdir, 'thirdrun', 95, '.mat RunOrder']);
 disp(numDur);
+sca;
 return;
 
 %% ---------------------------------------------------------------------
@@ -391,120 +392,6 @@ function [letterPosition, texture, sizes, mask] = loadTextures(screenInfo, wPtr,
         rethrow(ME); 
         return;
     end
-return;
-
-function [targetDur] = targetCalibration(Lrect, Rrect, cL, cR, wPtr, letterPosition, texture, sizes, mask, shift, frameDur, resp, masksize)
-black = [0 0 0];
-green = [0 255 0];
-accred = [255 0 0];
-calDur = [.03 .04 .05 .06 .07]; 
-targetCalMatrix = make_trialTypeMatrix(5,2,[length(calDur) 4]);
-order = Shuffle(1: size(targetCalMatrix));
-targetCalMatrix = targetCalMatrix(order,:);
-tarCalLength = size(targetCalMatrix,1); 
-targetCalMatrix = horzcat(targetCalMatrix, zeros(tarCalLength, 1));
-for i = 1:tarCalLength
-    scrap = 0;
-    while scrap == 0
-       [scrap, start, keyCode] = PsychHID('KbCheck');
-    end
-    Screen('FillOval', wPtr, black, Lrect);   
-    Screen('FillOval', wPtr, black, Rrect);
-    Screen('Flip', wPtr);
-    Screen('FillOval', wPtr, black, Lrect);
-    Screen('FillOval', wPtr, black, Rrect);
-
-    SOA = rand(1) + .5;
-    target = targetCalMatrix(i,2);
-    curDur = calDur(targetCalMatrix(i,1));
-    maskDur = .3 - curDur;
-    leftor = randi ([1 2],1,1);
-    for j = 1:4
-        try
-            if (leftor == 1)
-                cen = cL;
-            else
-                cen = cR;
-            end
-            curX = cen(1,1) + shift(j,1) ;
-            curY = cen(1,2) + shift(j,2);
-            map2Ref = 1 + mod(j+letterPosition(i,5),4); 
-            if target == j
-                Screen('DrawTexture', wPtr, texture(2,map2Ref) , [], CenterRectOnPoint([0,0,sizes(2,map2Ref,1,2),sizes(2,map2Ref,1,1)], curX, curY));
-            else
-                Screen('DrawTexture', wPtr, texture(1,map2Ref) , [], CenterRectOnPoint([0,0,sizes(1,map2Ref,1,2),sizes(1,map2Ref,1,1)], curX, curY));
-            end
-             
-        catch ME
-            sca;
-            rethrow(ME);
-            return;
-        end
-    end 
-    
-    [timeStamp1 a b c d] = Screen('Flip',wPtr, start + SOA - .5 * frameDur);
-    Screen('FillOval', wPtr, black, Lrect);
-    Screen('FillOval', wPtr, black, Rrect);
-    for j = 1:4
-        try
-            curX = cen(1,1) + shift(j,1);
-            curY = cen(1,2) + shift(j,2);
-            Screen('DrawTexture', wPtr, mask, [], CenterRectOnPoint([0,0,masksize(2),masksize(1)], curX, curY)); 
-        catch ME
-            sca;
-            disp('caught at 439');
-            rethrow(ME);
-            return;
-        end;
-    end
-    
-    Screen('Flip',wPtr, start + SOA + curDur - .5 * frameDur); 
-    Screen('FillOval', wPtr, black, Lrect);
-    Screen('FillOval', wPtr, black, Rrect);
-    Screen('Flip',wPtr, start + SOA + curDur + maskDur - .5 * frameDur);
-    TgtResp=[]; 
-    while isempty(TgtResp)
-        [keyIsDown,secs, RespCode] = KbCheck();
-        if keyIsDown
-            tmp = find(RespCode == 1)
-            TgtResp = find(KbName(resp.button(1:4)) == tmp(1));
-            if TgtResp>4
-                
-                TgtResp =[];
-            end
-        end
-        secs =[];
-        RespCode =[];
-    end
-    Screen('Flip',wPtr);
-    accuracy = (target == TgtResp);
-    targetCalMatrix(i,3) = accuracy;
-    
-    if (accuracy)
-        Screen('FillOval', wPtr, green, Lrect);
-        Screen('FillOval', wPtr, green, Rrect);
-    else
-        Screen('FillOval', wPtr, accred, Lrect);
-        Screen('FillOval', wPtr, accred, Rrect);
-    end
-    WaitSecs(.5);
-    Screen('Flip',wPtr);
-end
-targetCalMatrix = sortrows(targetCalMatrix);
-disp(targetCalMatrix);
-meanAcc = [mean(targetCalMatrix(1:20, 3)) mean(targetCalMatrix(21:40, 3)) mean(targetCalMatrix(41:60, 3)) mean(targetCalMatrix(61:80, 3)) mean(targetCalMatrix(81:100, 3))];
-found = false; 
-disp(meanAcc);
-for i = 1:5
-   if (found == false && meanAcc(i) > .8)
-       found = true;
-       targetDur = calDur(i);
-   end
-end
-if (found == false)
-    disp('error: could not calibrate');
-    sca;
-end
 return;
 
 function [img] = makeSineGrating(ih,iw,freq,angle,phase,mean,amp,pixPerDeg,r1,r2,bcolor);
